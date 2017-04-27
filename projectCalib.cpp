@@ -43,6 +43,14 @@ void createProjectorObjectPoints(vector<Point2f> &patternCorners, Size patternSi
 	}
 }
 
+
+/********************************************************
+*
+*功能：Vector转Mat
+*日期：2017-04-27
+*说明：
+*
+*********************************************************/
 void fromVectorToMat(vector<Point2f> v, Mat &pts)
 {
 	int nbrOfPoints = (int)v.size();
@@ -58,6 +66,13 @@ void fromVectorToMat(vector<Point2f> v, Mat &pts)
 }
 
 
+/********************************************************
+*
+*功能：归一化
+*日期：2017-04-27
+*说明：
+*
+*********************************************************/
 void normalize(const Mat &pts, const int& dim, Mat& normpts, Mat &T)
 {
 	float averagedist = 0;
@@ -102,6 +117,13 @@ void normalize(const Mat &pts, const int& dim, Mat& normpts, Mat &T)
 }
 
 
+/********************************************************
+*
+*功能：Mat转Vector
+*日期：2017-04-27
+*说明：
+*
+*********************************************************/
 void fromMatToVector(Mat pts, vector<Point2f> &v)
 {
 	int nbrOfPoints = pts.cols;
@@ -116,6 +138,13 @@ void fromMatToVector(Mat pts, vector<Point2f> &v)
 }
 
 
+/********************************************************
+*
+*功能：保存标定结果
+*日期：2017-04-27
+*说明：
+*
+*********************************************************/
 void saveCalibrationData(String path, vector<Mat> T1, vector<Mat> T2, vector<Mat> ptsProjCam, vector<Mat> ptsProjProj, vector<Mat> ptsProjCamN, vector<Mat> ptsProjProjN)
 {
 	FileStorage fs(path + ".yml", FileStorage::WRITE);
@@ -137,6 +166,14 @@ void saveCalibrationData(String path, vector<Mat> T1, vector<Mat> T2, vector<Mat
 }
 
 
+
+/********************************************************
+*
+*功能：标定函数
+*日期：2017-04-27
+*说明：
+*
+*********************************************************/
 double calibrate(vector< vector<Point3f> > objPoints, vector< vector<Point2f> > imgPoints,
 	Mat &cameraMatrix, Mat &distCoeffs, vector<Mat> &r, vector<Mat> &t, Size imgSize)
 {
@@ -148,6 +185,14 @@ double calibrate(vector< vector<Point3f> > objPoints, vector< vector<Point2f> > 
 	return rms;
 }
 
+
+/********************************************************
+*
+*功能：三维坐标的计算
+*日期：2017-04-27
+*说明：
+*
+*********************************************************/
 void fromCamToWorld(Mat cameraMatrix, vector<Mat> rV, vector<Mat> tV,
 	vector< vector<Point2f> > imgPoints, vector< vector<Point3f> > &worldPoints)
 {
@@ -189,6 +234,15 @@ void fromCamToWorld(Mat cameraMatrix, vector<Mat> rV, vector<Mat> tV,
 	}
 }
 
+
+
+/********************************************************
+*
+*功能：保存标定结果
+*日期：2017-04-27
+*说明：
+*
+*********************************************************/
 void saveCalibrationResults(String path, Mat camK, Mat camDistCoeffs, Mat projK, Mat projDistCoeffs,
 	Mat fundamental)
 {
