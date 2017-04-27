@@ -15,6 +15,16 @@
 #include "CameraOperation.h"
 #include "projectCalib.h"
 
+
+/********************************************************
+*
+*功能：棋盘格配置结构体
+*日期：2017-04-25
+*说明：
+*     (1)相机采集的棋盘格和投影仪投出的棋盘格是一幅，
+*        配置上要保持一致；
+*
+*********************************************************/
 struct Settings
 {
 	Settings();
@@ -27,7 +37,6 @@ struct Settings
 };
 
 
-//需要跟标定板的配置保持一样
 Settings::Settings(void)
 {
 	patternType = CHESSBOARD;
