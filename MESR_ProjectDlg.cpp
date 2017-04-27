@@ -182,6 +182,7 @@ BEGIN_MESSAGE_MAP(CMESR_ProjectDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CamCalib, &CMESR_ProjectDlg::OnBnClickedCamcalib)
 	ON_BN_CLICKED(IDC_ButExit, &CMESR_ProjectDlg::OnBnClickedButexit)
 	ON_BN_CLICKED(IDC_ButProjCalib, &CMESR_ProjectDlg::OnBnClickedButprojcalib)
+	ON_BN_CLICKED(IDC_ButStereo_3D, &CMESR_ProjectDlg::OnBnClickedButstereo3d)
 END_MESSAGE_MAP()
 
 
@@ -888,6 +889,7 @@ void CMESR_ProjectDlg::OnBnClickedDecodephase()
 			sinus->unwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, camSize, shadowMask);
 			phaseUnwrapping->unwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, shadowMask);
 			phaseUnwrapping->getInverseReliabilityMap(reliabilities);
+
 			reliabilities.convertTo(reliabilities8, CV_8U, 255, 128);
 			unwrappedPhaseMap.convertTo(unwrappedPhaseMap8, CV_8U, 1, 128);
 			wrappedPhaseMap.convertTo(wrappedPhaseMap8, CV_8U, 255, 128);
@@ -924,6 +926,7 @@ void CMESR_ProjectDlg::OnBnClickedDecodephase()
 			unwrappedPhaseMap.convertTo(unwrappedPhaseMap8, CV_8U, 1, 128);
 			wrappedPhaseMap.convertTo(wrappedPhaseMap8, CV_8U, 255, 128);
 			phaseUnwrapping->unwrapPhaseMap(wrappedPhaseMap, unwrappedPhaseMap, shadowMask);
+
 			Mat reliabilities, reliabilities8;
 			phaseUnwrapping->getInverseReliabilityMap(reliabilities);
 			reliabilities.convertTo(reliabilities8, CV_8U, 255, 128);
@@ -1422,4 +1425,17 @@ void CMESR_ProjectDlg::OnBnClickedButprojcalib()
 	CProjCalibDlg projDlg;
 	INT_PTR nRes;// 用于保存DoModal函数的返回值   
 	nRes = projDlg.DoModal();// 弹出对话框 
+}
+
+
+/********************************************************
+*
+*功能：基于立体视觉的相移法
+*日期：2017-04-27
+*说明：
+*
+*********************************************************/
+void CMESR_ProjectDlg::OnBnClickedButstereo3d()
+{
+	
 }

@@ -297,7 +297,7 @@ void CProjCalibDlg::OnBnClickedImagecap()
 			essential, fundamental);
 		//cout << "stereo calibrate: \n" << fundamental << endl;
 
-		saveCalibrationResults("./CalibrationResults", cameraMatrix, distCoeffs, projectorMatrix, projectorDistCoeffs, fundamental);
+		saveCalibrationResults("./CalibrationResults", cameraMatrix, distCoeffs, projectorMatrix, projectorDistCoeffs, fundamental,stereoR, stereoT);
 		
 		nbrOfValidFrames = 0;
 		CalibMessage = "Calib Finished!";

@@ -244,7 +244,7 @@ void fromCamToWorld(Mat cameraMatrix, vector<Mat> rV, vector<Mat> tV,
 *
 *********************************************************/
 void saveCalibrationResults(String path, Mat camK, Mat camDistCoeffs, Mat projK, Mat projDistCoeffs,
-	Mat fundamental)
+	Mat fundamental,Mat stereoR, Mat stereoT)
 {
 	FileStorage fs(path + ".yml", FileStorage::WRITE);
 	fs << "camIntrinsics" << camK;
@@ -252,5 +252,7 @@ void saveCalibrationResults(String path, Mat camK, Mat camDistCoeffs, Mat projK,
 	fs << "projIntrinsics" << projK;
 	fs << "projDistCoeffs" << projDistCoeffs;
 	fs << "fundamental" << fundamental;
+	fs << "stereoR" << stereoR;
+	fs << "stereoT" << stereoT;
 	fs.release();
 }

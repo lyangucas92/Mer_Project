@@ -49,4 +49,4 @@ void fromCamToWorld(Mat cameraMatrix, vector<Mat> rV, vector<Mat> tV,
 	vector< vector<Point2f> > imgPoints, vector< vector<Point3f> > &worldPoints);
 
 void saveCalibrationResults(String path, Mat camK, Mat camDistCoeffs, Mat projK, Mat projDistCoeffs,
-	Mat fundamental);
+	Mat fundamental, Mat stereoR, Mat stereoT);
