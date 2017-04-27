@@ -653,12 +653,12 @@ void CMESR_ProjectDlg::OnBnClickedSaveimg()
 	Mat viewrightimage_gray = cvarrToMat(viewrightimage);
 	resize(viewrightimage_gray, viewrightimage_gray, Size(1024, 768), 0, 0, CV_INTER_LINEAR);
 	//cvtColor(viewrightimage_gray, viewrightimage_gray, COLOR_RGB2GRAY);
-	imwrite("./imgdata/Raw_cam2_im" + name.str() + ".png", viewrightimage_gray);
+	imwrite("./Rawimgdata/Raw_cam2_im" + name.str() + ".png", viewrightimage_gray);
 
 	Mat viewleftimage_gray = cvarrToMat(viewleftimage);
 	resize(viewleftimage_gray, viewleftimage_gray, Size(1024, 768), 0, 0, CV_INTER_LINEAR);
 	//cvtColor(viewleftimage_gray, viewleftimage_gray, COLOR_RGB2GRAY);
-	imwrite("./imgdata/Raw_cam1_im" + name.str() + ".png", viewleftimage_gray);
+	imwrite("./Rawimgdata/Raw_cam1_im" + name.str() + ".png", viewleftimage_gray);
 
 	i++;
 }
