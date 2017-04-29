@@ -86,6 +86,13 @@ public:
 	vector<Mat> captures;
 	unsigned int nbrOfImages;
 
+	//立体相移法
+	Mat shadowMask_L, shadowMask_R;
+	Mat unwrappedPhaseMap_L, unwrappedPhaseMap8_L, unwrappedPhaseMap_R, unwrappedPhaseMap8_R;
+	Mat wrappedPhaseMap_L, wrappedPhaseMap8_L, wrappedPhaseMap_R, wrappedPhaseMap8_R;
+	Mat reliabilities_L, reliabilities_R;
+	Mat reliabilities8_L, reliabilities8_R;
+
 	// 相机标定参数
 	Mat cam1intrinsics, cam1distCoeffs, cam2intrinsics, cam2distCoeffs, R, T;
 
@@ -145,4 +152,5 @@ public:
 	int CamCounts;
 	afx_msg void OnBnClickedButexit();
 	afx_msg void OnBnClickedButprojcalib();
+	afx_msg void OnBnClickedButstereo3d();
 };

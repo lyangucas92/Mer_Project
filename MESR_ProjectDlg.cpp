@@ -182,7 +182,7 @@ BEGIN_MESSAGE_MAP(CMESR_ProjectDlg, CDialogEx)
 	ON_BN_CLICKED(IDC_CamCalib, &CMESR_ProjectDlg::OnBnClickedCamcalib)
 	ON_BN_CLICKED(IDC_ButExit, &CMESR_ProjectDlg::OnBnClickedButexit)
 	ON_BN_CLICKED(IDC_ButProjCalib, &CMESR_ProjectDlg::OnBnClickedButprojcalib)
-	ON_BN_CLICKED(IDC_ButStereo_3D, &CMESR_ProjectDlg::OnBnClickedButstereo3d)
+	ON_BN_CLICKED(IDC_Butstereo3d, &CMESR_ProjectDlg::OnBnClickedButstereo3d)
 END_MESSAGE_MAP()
 
 
@@ -1437,5 +1437,188 @@ void CMESR_ProjectDlg::OnBnClickedButprojcalib()
 *********************************************************/
 void CMESR_ProjectDlg::OnBnClickedButstereo3d()
 {
-	
+	//读入图像序列
+	string ImgName;
+	vector<string> imagelist_L, imagelist_R;
+	for (unsigned int i = 0; i < 3; i++)
+	{
+		//类型转换
+		string img_name;
+		char s[12];
+		_itoa(i + 1, s, 10);
+		img_name = s;
+		img_name = "./PhaseImg/phaseLeft_im" + img_name + ".png";
+
+		imagelist_L.push_back(img_name);
+	}
+	for (unsigned int i = 0; i < 3; i++)
+	{
+		//类型转换
+		string img_name;
+		char s[12];
+		_itoa(i + 1, s, 10);
+		img_name = s;
+		img_name = "./PhaseImg/phaseRight_im" + img_name + ".png";
+
+		imagelist_R.push_back(img_name);
+	}
+
+	//图像尺寸
+	Mat img = imread(imagelist_R[0], IMREAD_COLOR);
+	Size imagesSize = img.size();
+
+	// 立体校正
+	Mat R1, R2, P1, P2, Q;
+	Rect validRoi[2];
+	stereoRectify(cam1intrinsics, cam1distCoeffs, cam2intrinsics, cam2distCoeffs, imagesSize, R, T, R1, R2, P1, P2, Q,
+		0, -1, imagesSize, &validRoi[0], &validRoi[1]);
+	Mat map1x, map1y, map2x, map2y;
+	initUndistortRectifyMap(cam1intrinsics, cam1distCoeffs, R1, P1, imagesSize, CV_32FC1, map1x, map1y);
+	initUndistortRectifyMap(cam2intrinsics, cam2distCoeffs, R2, P2, imagesSize, CV_32FC1, map2x, map2y);
+
+
+	//畸变校正
+	vector<vector<Mat>> captured_pattern;
+	captured_pattern.resize(2);
+	captured_pattern[0].resize(3);
+	captured_pattern[1].resize(3);
+	for (size_t i = 0; i < 3; i++)
+	{
+		captured_pattern[0][i] = imread(imagelist_L[i], IMREAD_GRAYSCALE);
+		captured_pattern[1][i] = imread(imagelist_R[i], IMREAD_GRAYSCALE);
+		if ((!captured_pattern[0][i].data) || (!captured_pattern[1][i].data))
+		{
+			return;
+		}
+		remap(captured_pattern[0][i], captured_pattern[0][i], map1x, map1y, INTER_NEAREST, BORDER_CONSTANT, Scalar());
+		remap(captured_pattern[1][i], captured_pattern[1][i], map2x, map2y, INTER_NEAREST, BORDER_CONSTANT, Scalar());
+	}
+
+	//解相
+	Size camSize(-1, -1);
+	vector<Mat> captures_L, captures_R;
+	captures_L.push_back(captured_pattern[0][0]);
+	captures_L.push_back(captured_pattern[0][1]);
+	captures_L.push_back(captured_pattern[0][2]);
+	captures_R.push_back(captured_pattern[1][0]);
+	captures_R.push_back(captured_pattern[1][1]);
+	captures_R.push_back(captured_pattern[1][2]);
+
+	switch (params_sin.methodId)
+	{
+	case structured_light::FTP:	
+		// 左图像解相
+		sinus->computePhaseMap(captures_L, wrappedPhaseMap_L, shadowMask_L);
+		if (camSize.height == -1)//参数初始化
+		{
+			camSize.height = captured_pattern[0][0].rows;
+			camSize.width = captured_pattern[0][0].cols;
+			paramsUnwrapping.height = camSize.height;
+			paramsUnwrapping.width = camSize.width;
+
+			phaseUnwrapping =
+				phase_unwrapping::HistogramPhaseUnwrapping::create(paramsUnwrapping);
+		}
+		sinus->unwrapPhaseMap(wrappedPhaseMap_L, unwrappedPhaseMap_L, camSize, shadowMask_L);
+		phaseUnwrapping->unwrapPhaseMap(wrappedPhaseMap_L, unwrappedPhaseMap_L, shadowMask_L);
+		phaseUnwrapping->getInverseReliabilityMap(reliabilities_L);
+		//左图像解相结果保存
+		reliabilities_L.convertTo(reliabilities8_L, CV_8U, 255, 128);
+		unwrappedPhaseMap_L.convertTo(unwrappedPhaseMap8_L, CV_8U, 1, 128);
+		wrappedPhaseMap_L.convertTo(wrappedPhaseMap8_L, CV_8U, 255, 128);
+		imwrite("./phaseResults/FTP_reliabilities8_L.png", reliabilities8_L);
+		imwrite("./phaseResults/FTP_unwrappedPhaseMap8_L.png", unwrappedPhaseMap8_L);
+		imwrite("./phaseResults/FTP_wrappedPhaseMap8_L.png", wrappedPhaseMap8_L);
+
+		// 右图像解相
+		sinus->computePhaseMap(captures_R, wrappedPhaseMap_R, shadowMask_R);
+		if (camSize.height == -1)//参数初始化
+		{
+			camSize.height = captured_pattern[1][0].rows;
+			camSize.width = captured_pattern[1][0].cols;
+			paramsUnwrapping.height = camSize.height;
+			paramsUnwrapping.width = camSize.width;
+
+			phaseUnwrapping =
+				phase_unwrapping::HistogramPhaseUnwrapping::create(paramsUnwrapping);
+		}
+		sinus->unwrapPhaseMap(wrappedPhaseMap_R, unwrappedPhaseMap_R, camSize, shadowMask_R);
+		phaseUnwrapping->unwrapPhaseMap(wrappedPhaseMap_R, unwrappedPhaseMap_R, shadowMask_R);
+		phaseUnwrapping->getInverseReliabilityMap(reliabilities_R);
+		// 右图像解相结果保存
+		reliabilities_R.convertTo(reliabilities8_R, CV_8U, 255, 128);
+		unwrappedPhaseMap_R.convertTo(unwrappedPhaseMap8_R, CV_8U, 1, 128);
+		wrappedPhaseMap_R.convertTo(wrappedPhaseMap8_R, CV_8U, 255, 128);
+		imwrite("./phaseResults/FTP_reliabilities8_R.png", reliabilities8_R);
+		imwrite("./phaseResults/FTP_unwrappedPhaseMap8_R.png", unwrappedPhaseMap8_R);
+		imwrite("./phaseResults/FTP_wrappedPhaseMap8_R.png", wrappedPhaseMap8_R);
+		break;
+
+	case structured_light::PSP:
+	case structured_light::FAPS:
+		//左图像解相
+		sinus->computePhaseMap(captures_L, wrappedPhaseMap_L, shadowMask_L);
+		if (camSize.height == -1)
+		{
+			camSize.height = captured_pattern[0][0].rows;
+			camSize.width = captured_pattern[0][0].cols;
+			paramsUnwrapping.height = camSize.height;
+			paramsUnwrapping.width = camSize.width;
+			phaseUnwrapping =
+				phase_unwrapping::HistogramPhaseUnwrapping::create(paramsUnwrapping);
+		}
+		sinus->unwrapPhaseMap(wrappedPhaseMap_L, unwrappedPhaseMap_L, camSize, shadowMask_L);
+		phaseUnwrapping->unwrapPhaseMap(wrappedPhaseMap_L, unwrappedPhaseMap_L, shadowMask_L);
+		phaseUnwrapping->getInverseReliabilityMap(reliabilities_L);
+		//左图像解相结果保存
+		unwrappedPhaseMap_L.convertTo(unwrappedPhaseMap8_L, CV_8U, 1, 128);
+		wrappedPhaseMap_L.convertTo(wrappedPhaseMap8_L, CV_8U, 255, 128);	
+		reliabilities_L.convertTo(reliabilities8_L, CV_8U, 255, 128);
+		if (params_sin.methodId == structured_light::PSP)
+			imwrite("./phaseResults/PSP_reliabilities8_L.png", reliabilities8_L);
+		else
+			imwrite("./phaseResults/FAPS_reliabilities8_L.png", reliabilities8_L);
+		if (params_sin.methodId == structured_light::PSP)
+			imwrite("./phaseResults/PSP_unwrappedPhaseMap8_L.png", unwrappedPhaseMap8_L);
+		else
+			imwrite("./phaseResults/FASP_unwrappedPhaseMap8_L.png", unwrappedPhaseMap8_L);
+		if (params_sin.methodId == structured_light::PSP)
+			imwrite("./phaseResults/PSP_wrappedPhaseMap8_L.png", wrappedPhaseMap8_L);
+		else
+			imwrite("./phaseResults/FASP_wrappedPhaseMap8_L.png", wrappedPhaseMap8_L);
+
+
+		//右图像解相
+		sinus->computePhaseMap(captures_R, wrappedPhaseMap_R, shadowMask_R);
+		if (camSize.height == -1)
+		{
+			camSize.height = captured_pattern[1][0].rows;
+			camSize.width = captured_pattern[1][0].cols;
+			paramsUnwrapping.height = camSize.height;
+			paramsUnwrapping.width = camSize.width;
+			phaseUnwrapping =
+				phase_unwrapping::HistogramPhaseUnwrapping::create(paramsUnwrapping);
+		}
+		sinus->unwrapPhaseMap(wrappedPhaseMap_R, unwrappedPhaseMap_R, camSize, shadowMask_R);
+		phaseUnwrapping->unwrapPhaseMap(wrappedPhaseMap_R, unwrappedPhaseMap_R, shadowMask_R);
+		phaseUnwrapping->getInverseReliabilityMap(reliabilities_R);
+		//右图像解相结果保存
+		unwrappedPhaseMap_R.convertTo(unwrappedPhaseMap8_R, CV_8U, 1, 128);
+		wrappedPhaseMap_R.convertTo(wrappedPhaseMap8_R, CV_8U, 255, 128);
+		reliabilities_R.convertTo(reliabilities8_R, CV_8U, 255, 128);
+		if (params_sin.methodId == structured_light::PSP)
+			imwrite("./phaseResults/PSP_reliabilities8_R.png", reliabilities8_R);
+		else
+			imwrite("./phaseResults/FAPS_reliabilities8_R.png", reliabilities8_R);
+		if (params_sin.methodId == structured_light::PSP)
+			imwrite("./phaseResults/PSP_unwrappedPhaseMap8_R.png", unwrappedPhaseMap8_R);
+		else
+			imwrite("./phaseResults/FASP_unwrappedPhaseMap8_R.png", unwrappedPhaseMap8_R);
+		if (params_sin.methodId == structured_light::PSP)
+			imwrite("./phaseResults/PSP_wrappedPhaseMap8_R.png", wrappedPhaseMap8_R);
+		else
+			imwrite("./phaseResults/FASP_wrappedPhaseMap8_R.png", wrappedPhaseMap8_R);
+
+		break;
+	}
 }
